@@ -14,3 +14,10 @@ segno
 pillow
 
 streamlit
+
+librosa
+webrtcvad-wheels
+torch
+resemblyzer
+# Install resemblyzer with: pip install --no-deps resemblyzer
+# (webrtcvad-wheels replaces webrtcvad which fails to build on Windows)
