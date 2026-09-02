@@ -91,9 +91,16 @@ def style_base_layout():
             color: #6C63FF !important;
         }
 
-        h3, h4, p, label, span{
+        h3, h4, p, label, span:not([data-testid="stIconMaterial"]){
             font-family: 'Outfit', sans-serif !important;
             color: #B0ADCC !important;
+        }
+
+        /* Ensure Material icons render as glyphs, not text */
+        span[data-testid="stIconMaterial"] {
+            font-family: 'Material Symbols Outlined' !important;
+            font-size: 1.25rem !important;
+            font-variation-settings: 'FILL' 1 !important;
         }
 
         /* ── Text Input Fields ── */

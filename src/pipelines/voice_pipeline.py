@@ -2,6 +2,7 @@
 from resemblyzer import VoiceEncoder, preprocess_wav 
 import numpy as np 
 import io 
+# pyrefly: ignore [missing-import]
 import librosa
 import streamlit as st 
 from src.database.db import get_all_students

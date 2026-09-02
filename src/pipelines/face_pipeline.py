@@ -86,7 +86,7 @@ def predict_attendence(class_img):
     model_data = get_trained_model()
 
     if not model_data:
-        return {}, [], 0
+        return {}, [], len(encoddings)
     
     clf = model_data["clf"]
     X_train = model_data["X"]
@@ -114,6 +114,6 @@ def predict_attendence(class_img):
             detected_student[predicted_id] = True
 
     
-    return detected_student, all_students, len(encodding)
+    return detected_student, all_students, len(encoddings)
         
         
