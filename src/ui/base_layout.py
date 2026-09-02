@@ -178,10 +178,10 @@ def style_base_layout():
 
         button[kind="secondary"]{
             border-radius: 0.75rem !important;
-            background: rgba(108, 99, 255, 0.12) !important;
+            background: #000000 !important;
             color: #B0ADCC !important;
             padding: 0.6rem 1.4rem !important;
-            border: 1px solid rgba(108, 99, 255, 0.35) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
             font-weight: 500 !important;
             transition: all 0.3s ease !important;
             box-shadow: none !important;
@@ -189,10 +189,10 @@ def style_base_layout():
 
         button[kind="secondary"]:hover{
             transform: translateY(-2px) !important;
-            background: rgba(108, 99, 255, 0.25) !important;
-            border-color: #6C63FF !important;
+            background: #1a1a1a !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
             color: #E8E6F0 !important;
-            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.25) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
         }
 
         button[kind="tertiary"]{
