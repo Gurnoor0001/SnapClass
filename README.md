@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://i.ibb.co/YTYGn5qV/logo.png" alt="SnapClass Logo" width="120"/>
+  <img src="https://i.ibb.co/YTYGn5qV/logo.png" alt="LookHere Logo" width="120"/>
 </p>
 
-<h1 align="center">SnapClass</h1>
+<h1 align="center">LookHere</h1>
 
 <p align="center">
   <b>AI-Powered Smart Attendance System using Face Recognition & Voice Identification</b>
@@ -20,7 +20,7 @@
 
 ## 📖 About
 
-**SnapClass** is an AI-powered classroom attendance system that automates attendance tracking using **face recognition** and **voice identification**. Teachers can take attendance by simply uploading photos of the classroom or recording audio — the AI detects and identifies students automatically.
+**LookHere** is an AI-powered classroom attendance system that automates attendance tracking using **face recognition** and **voice identification**. Teachers can take attendance by simply uploading photos of the classroom or recording audio — the AI detects and identifies students automatically.
 
 Built with **Streamlit** for the frontend, **Supabase** (PostgreSQL) for the database, **dlib** for face recognition, and **Resemblyzer** for voice identification.
 
@@ -53,7 +53,7 @@ Built with **Streamlit** for the frontend, **Supabase** (PostgreSQL) for the dat
 ## 🏗️ Project Structure
 
 ```
-SnapClass/
+LookHere/
 ├── app.py                          # Main entry point
 ├── requirements.txt                # Python dependencies
 ├── .streamlit/
@@ -129,8 +129,8 @@ SnapClass/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Gurnoor0001/SnapClass.git
-cd SnapClass
+git clone https://github.com/Gurnoor0001/LookHere.git
+cd LookHere
 ```
 
 ### 2. Create Virtual Environment
