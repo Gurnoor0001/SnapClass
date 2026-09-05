@@ -7,7 +7,7 @@ from src.components.dialog_auto_enroll import auto_enrole_dialog
 def main():
     st.set_page_config(
         page_title="LookHere - Making Attendance Faster Using AI",
-        page_icon="https://i.ibb.co/YTYGn5qV/logo.png",
+        page_icon="assets/logo.jpg",
         
     )
     if "login_type" not in st.session_state:

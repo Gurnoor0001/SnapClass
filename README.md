@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.ibb.co/YTYGn5qV/logo.png" alt="LookHere Logo" width="120"/>
+  <img src="assets/logo.jpg" alt="LookHere Logo" width="120"/>
 </p>
 
 <h1 align="center">LookHere</h1>
