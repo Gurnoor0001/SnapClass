@@ -153,7 +153,7 @@ def student_screen():
                 st.session_state.user_type = "student"   
                 st.session_state.student_data = student   
                 st.toast(f"Welcome {student['student_name']}",icon="👋")
-                time.sleep(2)
+                time.sleep(0.5)
                 st.rerun()
                else:
                 st.info("Face Not Recognised ! you might be a new Student")
@@ -205,7 +205,7 @@ def student_screen():
                                 st.session_state.user_type = "student"   
                                 st.session_state.student_data = response_data[0]
                                 st.toast(f"Welcome {new_name}",icon="👋")
-                                time.sleep(2)
+                                time.sleep(0.5)
                                 st.rerun()
                                             
                             else:

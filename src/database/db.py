@@ -3,7 +3,7 @@ import bcrypt
 
 
 def hash_pass(password):
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode()
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=10)).decode()
 
 def check_teacher_exists(username):
     # check unique username 
@@ -97,4 +97,18 @@ def get_enrolled_subjects(student_id):
 
 def get_attendance_logs(student_id):
     response = supabase.table("attendance_logs").select("*,subjects(*)").eq("student_id",student_id).execute()
+    return response.data
+
+
+def get_attendance_for_teacher(teacher_id):
+    response = supabase.table("attendance_logs").select("*, subjects!inner(*)").eq("subjects.teacher_id",teacher_id).execute()
+    return response.data
+
+def delete_subject(subject_id):
+    # Delete related attendance logs
+    supabase.table("attendance_logs").delete().eq("subject_id", subject_id).execute()
+    # Delete related enrollments
+    supabase.table("subject_students").delete().eq("subject_id", subject_id).execute()
+    # Delete the subject itself
+    response = supabase.table("subjects").delete().eq("subject_id", subject_id).execute()
     return response.data
