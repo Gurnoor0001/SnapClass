@@ -31,13 +31,13 @@ def get_face_embed(img_np):
 
     detector, sp, face_recognizer = load_dlib_models()
 
-    faces = detector(img_np, 5)
+    faces = detector(img_np, 1)
 
     embeddings = []
 
     for face in faces:
         shape = sp(img_np, face)
-        face_descriptor = face_recognizer.compute_face_descriptor(img_np, shape, 5)
+        face_descriptor = face_recognizer.compute_face_descriptor(img_np, shape, 1)
         embeddings.append(np.array(face_descriptor))
     
     return embeddings 

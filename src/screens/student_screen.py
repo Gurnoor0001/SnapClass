@@ -177,7 +177,7 @@ def student_screen():
 
             try:
 
-                audio_data = st.audio_input("Record a Short phrase Like : I am Present, My name is .....")               
+                audio_data = st.audio_input("Record a Short phrase Like : I am Present, My name is .....", key="voice_enroll")               
 
             except Exception as e:
                 st.error("Error Recording Audio : ", e)
@@ -192,7 +192,8 @@ def student_screen():
                             
                             voice_embed = None 
                             if audio_data:
-                                voice_embed = get_voice_embedding(audio_data.read())
+                                audio_bytes = audio_data.getvalue()
+                                voice_embed = get_voice_embedding(audio_bytes)
 
                             response_data = create_student (
                                 new_name,face_embed,voice_embed
