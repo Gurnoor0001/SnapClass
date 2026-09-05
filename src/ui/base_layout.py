@@ -112,7 +112,8 @@ def style_base_layout():
         }
 
         div[data-testid="stTextInput"] input{
-            background: rgba(255, 255, 255, 0.06) !important;
+            background: #15172b !important;
+            -webkit-appearance: none !important;
             border: 1px solid rgba(108, 99, 255, 0.25) !important;
             border-radius: 0.75rem !important;
             color: #E8E6F0 !important;
@@ -122,10 +123,20 @@ def style_base_layout():
             transition: all 0.3s ease !important;
         }
 
+        /* Fix for Webkit autofill turning inputs white */
+        div[data-testid="stTextInput"] input:-webkit-autofill,
+        div[data-testid="stTextInput"] input:-webkit-autofill:hover, 
+        div[data-testid="stTextInput"] input:-webkit-autofill:focus, 
+        div[data-testid="stTextInput"] input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #15172b inset !important;
+            -webkit-text-fill-color: #E8E6F0 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
         div[data-testid="stTextInput"] input:focus{
             border-color: #6C63FF !important;
             box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2), 0 0 20px rgba(108, 99, 255, 0.1) !important;
-            background: rgba(255, 255, 255, 0.08) !important;
+            background: #1a1c33 !important;
             outline: none !important;
         }
 
