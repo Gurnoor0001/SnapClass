@@ -90,6 +90,44 @@ def student_dashboard():
 
 
 
+def _check_cooldown():
+    """Check if the user is in a failed-login cooldown period. Returns True if blocked."""
+    failed_attempts = st.session_state.get("login_failed_attempts", 0)
+    cooldown_until = st.session_state.get("login_cooldown_until", 0)
+    
+    if failed_attempts >= 3 and time.time() < cooldown_until:
+        remaining = int(cooldown_until - time.time())
+        st.error(f"🔒 Too many failed attempts. Please wait **{remaining}s** before trying again.")
+        return True
+    
+    # Reset if cooldown has expired
+    if failed_attempts >= 3 and time.time() >= cooldown_until:
+        st.session_state.login_failed_attempts = 0
+        st.session_state.login_cooldown_until = 0
+    
+    return False
+
+def _record_failed_attempt():
+    """Record a failed login attempt and trigger cooldown if threshold reached."""
+    attempts = st.session_state.get("login_failed_attempts", 0) + 1
+    st.session_state.login_failed_attempts = attempts
+    
+    if attempts >= 3:
+        st.session_state.login_cooldown_until = time.time() + 30  # 30 second cooldown
+
+
+def _verify_liveness(embed1, embed2):
+    """
+    Verify liveness by comparing two face embeddings:
+    - They must be from the SAME person (distance < 0.45)
+    - They must be DIFFERENT enough to confirm it's not a static photo (distance > 0.05)
+    """
+    distance = np.linalg.norm(np.array(embed1) - np.array(embed2))
+    same_person = distance < 0.45
+    not_static = distance > 0.05  # If distance is near-zero, it's likely the same static image
+    return same_person and not_static
+
+
 def student_screen():
     show_registration = False
     style_base_layout_dashboard()
@@ -106,62 +144,143 @@ def student_screen():
     with c2:
         if st.button("Back To Home",key = "Home_Button", shortcut = "control+backspace"):
             st.session_state["login_type"] = None
+            # Clean up login state on exit
+            for key in ["login_phase", "login_candidate", "login_embed1", "last_photo_id", 
+                        "scan_result", "last_verify_photo_id", "login_failed_attempts", "login_cooldown_until"]:
+                st.session_state.pop(key, None)
             st.rerun()
            
     
-    
-    st.header("Login Using Face Recognistion",text_alignment="center")
-    st.space()
-    st.space()
-    st.space()
+    # Initialize login phase
+    if "login_phase" not in st.session_state:
+        st.session_state.login_phase = "scan"  # "scan" or "verify"
 
-    photos = st.camera_input("Position Your Face in the center")
+    # Check cooldown before showing anything
+    if _check_cooldown():
+        return
 
-    if photos:
-       # Only scan once per photo — cache results in session state
-       photo_id = photos.file_id
-       if st.session_state.get("last_photo_id") != photo_id:
-           img = np.array(Image.open(photos))
-           with st.spinner("AI is Scanning Your Face..."):
-               detected, all_ids, num_faces = predict_attendence(img)
-               st.session_state.last_photo_id = photo_id
-               st.session_state.scan_result = {
-                   "detected": detected,
-                   "all_ids": all_ids,
-                   "num_faces": num_faces
-               }
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # PHASE 1: Initial Face Scan
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    if st.session_state.login_phase == "scan":
+        st.header("Login Using Face Recognition",text_alignment="center")
+        st.caption("Step 1 of 2 — Initial face scan")
+        st.space()
 
-       scan = st.session_state.get("scan_result", {})
-       detected = scan.get("detected", {})
-       num_faces = scan.get("num_faces", 0)
+        photos = st.camera_input("Position Your Face in the center")
 
-       if num_faces == 0:
-            st.warning("No Face Detected")
+        if photos:
+           # Only scan once per photo — cache results in session state
+           photo_id = photos.file_id
+           if st.session_state.get("last_photo_id") != photo_id:
+               img = np.array(Image.open(photos))
+               with st.spinner("AI is Scanning Your Face..."):
+                   detected, all_ids, num_faces = predict_attendence(img)
+                   # Also store the embedding for liveness check
+                   embed = get_face_embed(img)
+                   st.session_state.last_photo_id = photo_id
+                   st.session_state.scan_result = {
+                       "detected": detected,
+                       "all_ids": all_ids,
+                       "num_faces": num_faces,
+                       "embedding": embed[0].tolist() if embed else None
+                   }
 
-       elif num_faces > 1:
-            st.warning("Multiple Face Detected")
+           scan = st.session_state.get("scan_result", {})
+           detected = scan.get("detected", {})
+           num_faces = scan.get("num_faces", 0)
 
-       else:
-            if detected:
-               student_id = list(detected.keys())[0]
-               all_students = get_all_students()
+           if num_faces == 0:
+                st.warning("No Face Detected")
+                _record_failed_attempt()
 
-               student = next((s for s in all_students if s["student_id"]==student_id), None)
+           elif num_faces > 1:
+                st.warning("Multiple Faces Detected — only one face allowed for login")
+                _record_failed_attempt()
 
-               if student :
-                st.session_state.is_logged_in =  True
-                st.session_state.user_type = "student"   
-                st.session_state.student_data = student   
-                st.toast(f"Welcome {student['student_name']}",icon="👋")
-                time.sleep(0.5)
+           else:
+                if detected and scan.get("embedding"):
+                   student_id = list(detected.keys())[0]
+                   all_students = get_all_students()
+                   student = next((s for s in all_students if s["student_id"]==student_id), None)
+
+                   if student:
+                    # Move to verification phase
+                    st.session_state.login_phase = "verify"
+                    st.session_state.login_candidate = student
+                    st.session_state.login_embed1 = scan["embedding"]
+                    st.toast(f"Face matched! Please verify it's you.", icon="🔐")
+                    time.sleep(0.3)
+                    st.rerun()
+                   else:
+                    st.info("Face Not Recognised ! you might be a new Student")
+                    show_registration = True
+
+                else:
+                    st.info("Face Not Recognised ! you might be a new Student")
+                    _record_failed_attempt()
+                    show_registration = True 
+
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # PHASE 2: Liveness Verification (Second Photo)
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    elif st.session_state.login_phase == "verify":
+        candidate = st.session_state.get("login_candidate", {})
+        st.header("Verify Your Identity", text_alignment="center")
+        st.caption("Step 2 of 2 — Liveness check")
+        st.space()
+        
+        st.info(f"👤 Detected: **{candidate.get('student_name', 'Unknown')}**  \nPlease **turn your head slightly** or **change your expression** and take another photo to confirm it's really you.")
+        
+        verify_photo = st.camera_input("Take a verification photo", key="verify_camera")
+        
+        col_cancel, _ = st.columns([1, 3])
+        with col_cancel:
+            if st.button("← Start Over", key="restart_login"):
+                st.session_state.login_phase = "scan"
+                for key in ["login_candidate", "login_embed1", "last_verify_photo_id"]:
+                    st.session_state.pop(key, None)
                 st.rerun()
-               else:
-                st.info("Face Not Recognised ! you might be a new Student")
-                show_registration = True
-
-            else:
-                st.info("Face Not Recognised ! you might be a new Student")
-                show_registration = True 
+        
+        if verify_photo:
+            verify_photo_id = verify_photo.file_id
+            if st.session_state.get("last_verify_photo_id") != verify_photo_id:
+                st.session_state.last_verify_photo_id = verify_photo_id
+                
+                img2 = np.array(Image.open(verify_photo))
+                with st.spinner("Verifying your identity..."):
+                    embed2_list = get_face_embed(img2)
+                    
+                    if not embed2_list or len(embed2_list) != 1:
+                        st.warning("Please ensure exactly one face is visible.")
+                        _record_failed_attempt()
+                    else:
+                        embed1 = st.session_state.login_embed1
+                        embed2 = embed2_list[0].tolist()
+                        
+                        if _verify_liveness(embed1, embed2):
+                            # Liveness confirmed — log in
+                            student = st.session_state.login_candidate
+                            st.session_state.is_logged_in = True
+                            st.session_state.user_type = "student"   
+                            st.session_state.student_data = student   
+                            # Clean up login state
+                            for key in ["login_phase", "login_candidate", "login_embed1", 
+                                        "last_photo_id", "last_verify_photo_id", "scan_result",
+                                        "login_failed_attempts", "login_cooldown_until"]:
+                                st.session_state.pop(key, None)
+                            st.toast(f"Welcome {student['student_name']}",icon="👋")
+                            time.sleep(0.5)
+                            st.rerun()
+                        else:
+                            st.error("⚠️ Verification failed — the faces don't match, or a static image was detected. Please try again.")
+                            _record_failed_attempt()
+                            # Reset back to scan phase
+                            st.session_state.login_phase = "scan"
+                            for key in ["login_candidate", "login_embed1"]:
+                                st.session_state.pop(key, None)
+                            time.sleep(1.5)
+                            st.rerun()
 
     if show_registration:
         with st.container(border=True):
@@ -212,4 +331,5 @@ def student_screen():
                                 st.error("Failed to Create Profile")
                 else:   
                     st.warning("Name not Found !")    
+
     

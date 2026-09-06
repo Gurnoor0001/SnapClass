@@ -95,25 +95,32 @@ def predict_attendence(class_img):
 
     all_students = sorted(list(set(y_train)))
 
+    # Security thresholds
+    resemblance_threshold = 0.45  # Tightened from 0.6 — dlib distance < 0.4 is very confident, 0.4-0.5 is likely match
+    svm_confidence_threshold = 0.70  # Require ≥70% SVM probability
+
     for encodding in encoddings:
-        if (len(all_students)) >=2:
+        predicted_id = None
+        svm_confident = False
 
+        if len(all_students) >= 2:
+            # Use SVM classifier with confidence check
             predicted_id = int(clf.predict([encodding])[0])
-        
+            probabilities = clf.predict_proba([encodding])[0]
+            max_prob = float(max(probabilities))
+            svm_confident = max_prob >= svm_confidence_threshold
         else:
+            # Single student — still must pass distance check (no free bypass)
             predicted_id = int(all_students[0])
+            svm_confident = True  # Skip SVM confidence for single-student (only distance matters)
 
-
+        # Distance-based verification (always enforced)
         student_embedding = X_train[y_train.index(predicted_id)]
+        best_match_score = np.linalg.norm(student_embedding - encodding)
 
-        best_match_socre = np.linalg.norm(student_embedding - encodding)
-
-        resemblance_threshold = 0.6
-
-        if best_match_socre <= resemblance_threshold:
+        # DUAL-LAYER: Both SVM confidence AND distance must pass
+        if svm_confident and best_match_score <= resemblance_threshold:
             detected_student[predicted_id] = True
 
     
-    return detected_student, all_students, len(encoddings)
-        
-        
+    return detected_student, all_students, len(encoddings)
